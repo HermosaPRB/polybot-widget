@@ -1,0 +1,105 @@
+.features {
+    padding: var(--space-4xl) 0;
+    background-color: var(--bg-secondary);
+    position: relative;
+}
+
+/* Decorative background glow */
+.features::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.features-header {
+    text-align: center;
+    max-width: 650px;
+    margin: 0 auto var(--space-3xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    position: relative;
+}
+
+.features-title {
+    font-size: clamp(32px, 4vw, 46px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+}
+
+.features-subtitle {
+    color: var(--text-secondary);
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+    position: relative;
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: all var(--transition-base);
+}
+
+.feature-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(124, 58, 237, 0.3);
+    transform: translateY(-4px);
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(124, 58, 237, 0.15);
+}
+
+.feature-icon-wrapper {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(37, 99, 235, 0.1));
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    margin-bottom: var(--space-xs);
+    transition: all var(--transition-fast);
+}
+
+.feature-card:hover .feature-icon-wrapper {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(37, 99, 235, 0.15));
+    border-color: rgba(124, 58, 237, 0.4);
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.2);
+}
+
+.feature-icon {
+    font-size: 24px;
+}
+
+.feature-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.feature-card-desc {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.6;
+}

@@ -1,0 +1,155 @@
+# Polymarket P&L Widget
+
+## Overview
+
+A mobile widget product that lets Polymarket traders see their P&L and open positions at a glance on their iPhone home screen. Designed to scale from a single-user Scriptable prototype to a multi-user native iOS app.
+
+## Problem
+
+Polymarket has no native mobile app with home screen widgets. Traders have to open the browser, log in, and navigate to their portfolio to check P&L. There's no glanceable, always-visible way to monitor positions.
+
+## Target User
+
+Polymarket power users and prediction market traders who want passive, ambient portfolio visibility on their phone.
+
+## Architecture
+
+### Phase 1: Single-User (Scriptable MVP)
+
+Two components:
+
+**1. VPS API Server (Python/FastAPI)**
+- Queries the Polymarket Gamma API (`gamma-api.polymarket.com`) for wallet positions
+- Queries the CLOB API (`clob.polymarket.com`) for current token prices
+- Calculates realized + unrealized P&L per position
+- Returns JSON payload via `GET /pnl?key=<API_KEY>`
+- In-memory cache (2 min TTL) to avoid rate limits
+- Simple API key auth (single user, env var)
+- Dependencies: `fastapi`, `uvicorn`, `httpx`, `python-dotenv`
+
+**2. iOS Widget (Scriptable JS)**
+- User installs Scriptable app, pastes the script, edits CONFIG with their server URL + API key
+- Fetches from VPS endpoint, renders widget
+- Small widget: total P&L only
+- Medium widget: total P&L + top 4 open positions with individual unrealized P&L
+- Dark theme, green/red P&L coloring, monospaced numbers
+- iOS refreshes widgets ~every 15 minutes (platform limitation)
+
+**API Response Schema (Phase 1):**
+```json
+{
+  "wallet": "0xABCD...",
+  "total_pnl": 142.50,
+  "total_realized": 80.00,
+  "total_unrealized": 62.50,
+  "position_count": 7,
+  "positions": [
+    {
+      "title": "Will BTC hit $100k by June?",
+      "outcome": "Yes",
+      "size": 50.0,
+      "avg_price": 0.35,
+      "current_price": 0.48,
+      "cost_basis": 17.50,
+      "current_value": 24.00,
+      "unrealized_pnl": 6.50,
+      "realized_pnl": 0.0
+    }
+  ],
+  "updated_at": "2026-03-13T18:00:00Z"
+}
+```
+
+### Phase 2: Multi-User (Shared API + Signup)
+
+Scale from 1 wallet to N wallets.
+
+**Backend changes:**
+- Add Supabase (or Postgres) `users` table: `id`, `email`, `wallet_address`, `api_token`, `created_at`
+- Signup flow: user provides email + wallet address, gets a personal API token
+- API endpoint becomes `GET /pnl?token=<USER_TOKEN>` — looks up wallet from DB
+- Rate limiting per user
+- Optional: WalletConnect integration for wallet verification
+
+**Frontend: Landing page (React)**
+- Simple signup: email + wallet address → generates token
+- Instructions for Scriptable setup with their personal token
+- Dashboard showing their current P&L (web fallback)
+
+**Supabase schema:**
+```sql
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  wallet_address text not null,
+  api_token text unique not null default encode(gen_random_bytes(32), 'hex'),
+  created_at timestamptz default now()
+);
+```
+
+### Phase 3: Native iOS App (WidgetKit)
+
+Graduate from Scriptable to a real App Store product.
+
+- Swift/SwiftUI app with WidgetKit extension
+- App Store distribution — no code pasting
+- Sign in with email or wallet
+- Native small / medium / large widgets
+- Background refresh via `BGAppRefreshTask`
+- Optional push notifications for large P&L swings
+- Optional: Kalshi support (broader prediction market coverage)
+
+## Key APIs
+
+| API | Base URL | Purpose |
+|-----|----------|---------|
+| Gamma API | `https://gamma-api.polymarket.com` | Wallet positions, market metadata |
+| CLOB API | `https://clob.polymarket.com` | Current token prices (bid/ask/mid) |
+
+**Gamma positions query:**
+```
+GET /query?type=positions&user=<WALLET>&sizeThreshold=0.01&limit=100
+```
+
+**CLOB price query:**
+```
+GET /price?token_id=<TOKEN_ID>&side=sell
+```
+
+## P&L Calculation
+
+```
+cost_basis = size * avg_price
+current_value = size * current_price
+unrealized_pnl = current_value - cost_basis
+total_pnl = sum(realized_pnl) + sum(unrealized_pnl)
+```
+
+## Widget Design
+
+- Dark background (#0D0F14)
+- Card surfaces (#161921)
+- Green for positive P&L (#00E676)
+- Red for negative P&L (#FF5252)
+- Accent/branding (#818CF8, purple)
+- Monospaced numbers for alignment
+- Positions sorted by absolute unrealized P&L descending
+- Titles truncated to ~28 chars in widget
+
+## Tech Stack
+
+| Layer | Phase 1 | Phase 2 | Phase 3 |
+|-------|---------|---------|---------|
+| Server | Python FastAPI | Python FastAPI + Supabase | Same or Node.js |
+| Auth | Env var API key | Per-user token (DB) | JWT / wallet auth |
+| Frontend | Scriptable (JS) | React landing + Scriptable | Swift/SwiftUI |
+| Widget | Scriptable | Scriptable | WidgetKit |
+| Hosting | Any VPS | Any VPS | VPS + App Store |
+
+## Open Questions
+
+- Should Phase 2 support multiple wallets per user?
+- Kalshi support in Phase 2 or Phase 3?
+- Monetization: free tier + paid (notifications, multi-wallet)? Or free forever for growth?
+- Do we want a web dashboard alongside the widget, or widget-only?
+
