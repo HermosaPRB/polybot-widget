@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import './PnlDashboard.css';
 
-// Backend API URL — change this when you deploy
-const API_URL = 'http://localhost:8000';
+// Backend API URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://polybot-api.onrender.com';
 
 function formatPnl(value) {
     const prefix = value >= 0 ? '+$' : '-$';
