@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import './SetupGuide.css';
 
-const WIDGET_SCRIPT_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/polybot-widget/main/widget/polybot_widget.js';
+const WIDGET_SCRIPT_URL = 'https://raw.githubusercontent.com/HermosaPRB/polybot-widget/main/widget/polybot_widget.js';
 
 const steps = [
     {
